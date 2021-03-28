@@ -111,7 +111,7 @@ class BotClient( discord.Client ):
                 print( '{} asked for a persistent message'.format(message.author))
                 if message.author.permissions_in(message.channel).manage_messages:
                     print( '{} was authorised for a persistent message'.format(message.author))
-                    labsString = self.getListStr() + "This list is updated every 10 minutes.\nQuick Lab: " + self.getRLab()
+                    labsString = self.getListStr() + "Quick Lab: " + self.getRLab()
                     for msg in self.p_msg:
                         if msg.channel == message.channel:
                             self.p_msg.remove(msg)
@@ -126,7 +126,7 @@ class BotClient( discord.Client ):
                     for msg in self.p_msg_grid:
                         if msg.channel == message.channel:
                             self.p_msg_grid.remove(msg)
-                    self.p_msg_grid.append(await message.channel.send(self.getGridStr() + "This grid is updated every 10 minutes.\nQuick Lab: " + self.getRLab()))
+                    self.p_msg_grid.append(await message.channel.send(self.getGridStr() + "Quick Lab: " + self.getRLab()))
                     await self.savePMsg()
                 else:
                     await message.channel.send("You are not authorised to use this command.")
@@ -220,20 +220,20 @@ class BotClient( discord.Client ):
         return labsString + "\n```"
 
     async def updatePMsg(self):
-        labsString = self.getListStr() + "This list is updated every 10 minutes.\nQuick Lab: " + self.getRLab()
+        labsString = self.getListStr() + "Quick Lab: " + self.getRLab()
         for msg in self.p_msg:
             try:
                 await msg.edit(content=labsString)
             except Exception as err:
                 print("Problem editting persistent message. {}".format(err), flush=True)
         #Grid message section
-        labsString = self.getGridStr() + "This grid is updated every 10 minutes.\nQuick Lab: " + self.getRLab()
+        labsString = self.getGridStr() + "Quick Lab: " + self.getRLab()
         for msg in self.p_msg_grid:
             try:
                 await msg.edit(content=labsString, flush=True)
             except:
                 print("Problem editting persistent message.", flush=True)
-        labsString = self.getHybridStr() + "This grid is updated every 10 minutes.\nQuick Lab: " + self.getRLab()
+        labsString = self.getHybridStr() + "Quick Lab: " + self.getRLab()
         for msg in self.p_msg_hybrid:
             try:
                 await msg.edit(content=labsString, flush=True)
