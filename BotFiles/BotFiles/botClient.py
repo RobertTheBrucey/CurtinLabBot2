@@ -11,6 +11,7 @@ import config
 import socket
 import sys
 import Webserver
+from discord.ext import commands
 
 listLen = 1000
 class BotClient( discord.Client ):
