@@ -17,7 +17,6 @@ class BotClient( discord.Client ):
     
     def __init__(self, configfile):
         super().__init__()
-        self.scanner = scanner
         self.scanner.bot = self
         self.p_msg = []
         self.p_msg_grid = []
