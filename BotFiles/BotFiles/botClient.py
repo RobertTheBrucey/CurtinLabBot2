@@ -307,5 +307,3 @@ def pad(inte,places):
 def getIP(hostname):
     return "Not Currently Supported"
     return socket.gethostbyname(hostname)
-
-class Webserver(commands.cog)
