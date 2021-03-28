@@ -6,6 +6,7 @@ if __name__ == '__main__':
     import logging
     import datetime
     import time
+    from discord.ext import commands
 
     logger = logging.getLogger('discord')
     logger.setLevel(logging.INFO)
