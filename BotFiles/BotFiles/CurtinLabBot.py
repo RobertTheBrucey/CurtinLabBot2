@@ -33,5 +33,6 @@ logfile="
         exit()
 
     """ Setup """
-    client = bc.BotClient(configfile)
+    #client = bc.BotClient(configfile)
+    client = commands.Bot(command_prefix="^")
     client.run(getToken(filename=configfile))
