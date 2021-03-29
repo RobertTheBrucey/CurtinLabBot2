@@ -3,6 +3,7 @@ from discord.ext import commands, tasks
 import os
 import aiohttp
 import pickle
+import asyncio
 
 app = web.Application()
 routes = web.RouteTableDef()
@@ -67,3 +68,35 @@ class Webserver(commands.Cog):
     @web_server.before_loop
     async def web_server_before_loop(self):
         await self.bot.wait_until_ready()
+
+    @tasks.loop(seconds=60)
+    async def pull_labs(self):
+        async with aiohttp.ClientSession() as session:
+            async with session.get('http://35.189.5.47/machineList.txt') as resp:
+                data = await resp.text()
+                print(data)
+                return
+                mini = 1000
+                for room in [218,219,220,221,232]:
+                    for row in range(1,7):
+                        for column in "abcd":
+                            for row in range(1,7):
+                                host = "lab{}-{}0{}.cs.curtin.edu.au.".format(room,column,row)
+                                users = -1 #Get users for this host
+                                self.labs[host] = users
+                                if (users>-1 and users < mini):
+                                    mini = users
+                                    mins = []
+                                if (users == mini):
+                                    mins.append(host)
+                self.mins = mins
+                max = -1
+                for lab in sorted(self.labs,key=self.labs.get):
+                    if self.labs[lab] > max:
+                        max = self.labs[lab]
+                if max != -1:
+                    print("Saving up machines to file", flush=True)
+                    pickle.dump( (self.labs,self.mins), open ("./persistence/labs.p", "wb" ) )
+                if self.bot:
+                    if self.bot.eloop:
+                        self.bot.eloop.create_task(self.bot.updatePMsg())
