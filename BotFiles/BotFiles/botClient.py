@@ -35,6 +35,7 @@ class BotClient( discord.Client ):
         self.eloop = None
         self.labs = {}
         self.mins = []
+        print("Bot initialised")
         #Webserver.setup(self)
 
     async def on_ready( self ):
