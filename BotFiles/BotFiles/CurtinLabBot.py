@@ -1,7 +1,7 @@
 if __name__ == '__main__':
     import discord
     import botClient as bc
-    from config import getToken,getCreds
+    from config import getToken
     import sys
     import logging
     import datetime

@@ -280,7 +280,6 @@ class BotClient( discord.Client ):
         pickle.dump( msgs, open ("./persistence/pmsgn.p", "wb" ) )
 
     def getRLab(self):
-        
         lab = random.choice(self.mins)
         return lab
     
