@@ -311,6 +311,11 @@ class BotClient( discord.Client ):
                     pickle.dump( (self.labs,self.mins), open ("./persistence/labs.p", "wb" ) )
                 await updatePMsg(self.labs)
 
+    @pull_labs.before_loop
+    async def before_pull_labs(self):
+        print("Waiting for Bot to start before pulling labs.")
+        await self.wait_until_ready()
+
 def pad(inte,places):
     if inte < 1:
         padding = places-1
