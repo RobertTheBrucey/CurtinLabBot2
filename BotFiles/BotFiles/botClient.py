@@ -10,8 +10,9 @@ from multiprocessing import Process, Queue
 import config
 import socket
 import sys
-import Webserver
+#import Webserver
 from discord.ext import commands
+import aiohttp
 
 listLen = 1000
 class BotClient( discord.Client ):
@@ -32,7 +33,9 @@ class BotClient( discord.Client ):
         self.configfile = configfile
         self.owner = None
         self.eloop = None
-        Webserver.setup(self)
+        self.labs = {}
+        self.mins = []
+        #Webserver.setup(self)
 
     async def on_ready( self ):
         print( 'Logged on as {0}!'.format( self.user ) )
@@ -136,10 +139,10 @@ class BotClient( discord.Client ):
     def getListStr(self):
         labsString = ""
         
-        for lab in sorted(self.get_cog('Webserver').labs,key=self.get_cog('Webserver').labs.get):
-            if self.get_cog('Webserver').labs[lab] != -1:
-                labsString += "\n"+lab+" has "+str(self.get_cog('Webserver').labs[lab])+" user"
-                if self.get_cog('Webserver').labs[lab] != 1:
+        for lab in sorted(self.labs,key=self.labs.get):
+            if self.labs[lab] != -1:
+                labsString += "\n"+lab+" has "+str(self.labs[lab])+" user"
+                if self.labs[lab] != 1:
                     labsString += "s"
         labsString = "Available lab machines are:```c"+labsString
         labsString = labsString[:labsString[:listLen].rfind('\n')] + "\n```"
@@ -158,7 +161,7 @@ class BotClient( discord.Client ):
                 labsString += "-" + str(column)
                 for row in range(1,7):
                     host = "lab{}-{}0{}.cs.curtin.edu.au.".format(room,column,row)
-                    users = self.get_cog('Webserver').labs.get(host,-1)
+                    users = self.labs.get(host,-1)
                     labsString +=  "  " + str((" ",users)[users!=-1]) + pad(users,sp)
                 labsString += "\n"
         return labsString + "\n```"
@@ -166,10 +169,10 @@ class BotClient( discord.Client ):
     def getHybridStr(self):
         labsString = "```nim\nLab Machine Users By Room  -:- Quick Labs\n"
         
-        labs = sorted(self.get_cog('Webserver').labs,key=self.get_cog('Webserver').labs.get)
+        labs = sorted(self.labs,key=self.labs.get)
         ii = 0
         while ii < len(labs):
-            if self.get_cog('Webserver').labs[labs[ii]] == -1:
+            if self.labs[labs[ii]] == -1:
                 labs.remove(labs[ii])
             else:
                 ii = ii + 1
@@ -195,7 +198,7 @@ class BotClient( discord.Client ):
                 labsString += "-" + str(column)
                 for row in range(1,7):
                     host = "lab{}-{}0{}.cs.curtin.edu.au.".format(room,column,row)
-                    users = self.get_cog('Webserver').labs.get(host,-1)
+                    users = self.labs.get(host,-1)
                     labsString +=  "  " + str((" ",users)[users!=-1]) + pad(users,sp)
                 if (ii % 2 == 0):
                     labsString += " -:- " + labs[int(ii/2)] + "\n"
@@ -277,8 +280,36 @@ class BotClient( discord.Client ):
 
     def getRLab(self):
         
-        lab = random.choice(self.get_cog('Webserver').mins)
+        lab = random.choice(self.mins)
         return lab
+    
+    @tasks.loop(seconds=60)
+    async def pull_labs(self):
+        print('Getting lab status')
+        async with aiohttp.ClientSession() as session:
+            async with session.get('http://35.189.5.47/machineList.txt') as resp:
+                data = await resp.text()
+                data = data.split("\n")[1:]
+                mini = data[0].split(",")[3]
+                for row in data:
+                    parts = row.split(",")
+                    host = f"lab{parts[0]}-{parts[1]}0{parts[2]}.cs.curtin.edu.au."
+                    users = -1 if parts[3] == 'nil' else int(parts[3])
+                    self.labs[host] = users
+                    if (users>-1 and users < mini):
+                        mini = users
+                        mins = []
+                    if (users == mini):
+                        mins.append(host)
+                self.mins = mins
+                max = -1
+                for lab in sorted(self.labs,key=self.labs.get):
+                    if self.labs[lab] > max:
+                        max = self.labs[lab]
+                if max != -1:
+                    print("Saving up machines to file", flush=True)
+                    pickle.dump( (self.labs,self.mins), open ("./persistence/labs.p", "wb" ) )
+                await updatePMsg(self.labs)
 
 def pad(inte,places):
     if inte < 1:
@@ -290,3 +321,4 @@ def pad(inte,places):
 def getIP(hostname):
     return "Not Currently Supported"
     return socket.gethostbyname(hostname)
+

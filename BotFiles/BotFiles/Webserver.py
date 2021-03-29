@@ -16,7 +16,7 @@ class Webserver(commands.Cog):
         self.labs = {}
         self.mins = []
         self.bot = bot
-        self.web_server.start()
+        #self.web_server.start()
         self.pull_labs.start()
 
         try:
@@ -26,7 +26,7 @@ class Webserver(commands.Cog):
             print("Labs successfully loaded.")
         except:
             print("No labs to load")
-
+"""
         @routes.post('/curtin_lab_ingest')
         async def cli_post(request):
             data = await request.json()
@@ -64,7 +64,7 @@ class Webserver(commands.Cog):
         runner = web.AppRunner(app)
         await runner.setup()
         site = web.TCPSite(runner, host='0.0.0.0', port=self.webserver_port)
-        await site.start()
+        await site.start()"""
     
     @web_server.before_loop
     async def web_server_before_loop(self):
@@ -72,6 +72,7 @@ class Webserver(commands.Cog):
 
     @tasks.loop(seconds=60)
     async def pull_labs(self):
+        print('Getting lab status')
         async with aiohttp.ClientSession() as session:
             async with session.get('http://35.189.5.47/machineList.txt') as resp:
                 data = await resp.text()
