@@ -51,15 +51,6 @@ class BotClient( discord.Client ):
         appinfo = await self.application_info()
         self.owner = appinfo.owner
         self.eloop = asyncio.get_event_loop()
-        #asyncio.get_event_loop().create_task(self.checkForNew())
-
-    async def checkForNew(self):
-        while True:
-            if self.scanner.newLabs:
-                await asyncio.sleep(1)
-                await self.updatePMsg()
-                self.scanner.newLabs = False
-            await asyncio.sleep(1)
 
     async def on_message( self, message ):
         #Ignore own messages
@@ -141,19 +132,15 @@ class BotClient( discord.Client ):
                     await self.savePMsg()
                 else:
                     await message.channel.send("You are not authorised to use this command.")
-        if self.scanner.newLabs:
-            await self.updatePMsg()
-            self.scanner.newLabs = False
 
     def getListStr(self):
         labsString = ""
-        self.scanner.lock.acquire()
-        for lab in sorted(self.scanner.labs,key=self.scanner.labs.get):
-            if self.scanner.labs[lab] != -1:
-                labsString += "\n"+lab+" has "+str(self.scanner.labs[lab])+" user"
-                if self.scanner.labs[lab] != 1:
+        
+        for lab in sorted(self.get_cog('Webserver').labs,key=self.get_cog('Webserver').labs.get):
+            if self.get_cog('Webserver').labs[lab] != -1:
+                labsString += "\n"+lab+" has "+str(self.get_cog('Webserver').labs[lab])+" user"
+                if self.get_cog('Webserver').labs[lab] != 1:
                     labsString += "s"
-        self.scanner.lock.release()
         labsString = "Available lab machines are:```c"+labsString
         labsString = labsString[:labsString[:listLen].rfind('\n')] + "\n```"
         return labsString
@@ -161,7 +148,7 @@ class BotClient( discord.Client ):
     def getGridStr(self):
         labsString = "Lab Machine Users By Room:\n```nim\n"
         sp = 2
-        self.scanner.lock.acquire()
+        
         for room in [218,219,220,221,232]:
             labsString += "lab" + str(room) + ":\n  "
             for row in range(1,7):
@@ -171,19 +158,18 @@ class BotClient( discord.Client ):
                 labsString += "-" + str(column)
                 for row in range(1,7):
                     host = "lab{}-{}0{}.cs.curtin.edu.au.".format(room,column,row)
-                    users = self.scanner.labs.get(host,-1)
+                    users = self.get_cog('Webserver').labs.get(host,-1)
                     labsString +=  "  " + str((" ",users)[users!=-1]) + pad(users,sp)
                 labsString += "\n"
-        self.scanner.lock.release()
         return labsString + "\n```"
     
     def getHybridStr(self):
         labsString = "```nim\nLab Machine Users By Room  -:- Quick Labs\n"
-        self.scanner.lock.acquire()
-        labs = sorted(self.scanner.labs,key=self.scanner.labs.get)
+        
+        labs = sorted(self.get_cog('Webserver').labs,key=self.get_cog('Webserver').labs.get)
         ii = 0
         while ii < len(labs):
-            if self.scanner.labs[labs[ii]] == -1:
+            if self.get_cog('Webserver').labs[labs[ii]] == -1:
                 labs.remove(labs[ii])
             else:
                 ii = ii + 1
@@ -209,14 +195,13 @@ class BotClient( discord.Client ):
                 labsString += "-" + str(column)
                 for row in range(1,7):
                     host = "lab{}-{}0{}.cs.curtin.edu.au.".format(room,column,row)
-                    users = self.scanner.labs.get(host,-1)
+                    users = self.get_cog('Webserver').labs.get(host,-1)
                     labsString +=  "  " + str((" ",users)[users!=-1]) + pad(users,sp)
                 if (ii % 2 == 0):
                     labsString += " -:- " + labs[int(ii/2)] + "\n"
                 else:
                     labsString += " -:- IP: " + getIP(labs[int(ii/2)]) + "\n"
                 ii = ii + 1
-        self.scanner.lock.release()
         return labsString + "\n```"
 
     async def updatePMsg(self):
@@ -291,9 +276,8 @@ class BotClient( discord.Client ):
         pickle.dump( msgs, open ("./persistence/pmsgn.p", "wb" ) )
 
     def getRLab(self):
-        self.scanner.lock.acquire()
-        lab = random.choice(self.scanner.mins)
-        self.scanner.lock.release()
+        
+        lab = random.choice(self.get_cog('Webserver').mins)
         return lab
 
 def pad(inte,places):

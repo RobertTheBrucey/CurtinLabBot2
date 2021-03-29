@@ -75,21 +75,18 @@ class Webserver(commands.Cog):
         async with aiohttp.ClientSession() as session:
             async with session.get('http://35.189.5.47/machineList.txt') as resp:
                 data = await resp.text()
-                print(data)
-                return
-                mini = 1000
-                for room in [218,219,220,221,232]:
-                    for row in range(1,7):
-                        for column in "abcd":
-                            for row in range(1,7):
-                                host = "lab{}-{}0{}.cs.curtin.edu.au.".format(room,column,row)
-                                users = -1 #Get users for this host
-                                self.labs[host] = users
-                                if (users>-1 and users < mini):
-                                    mini = users
-                                    mins = []
-                                if (users == mini):
-                                    mins.append(host)
+                data = data.split("\n")[1:]
+                mini = data[0].split(",")[3]
+                for row in data:
+                    parts = row.split(",")
+                    host = f"lab{parts[0]}-{parts[1]}0{parts[2]}.cs.curtin.edu.au."
+                    users = -1 if parts[3] == 'nil' else int(parts[3])
+                    self.labs[host] = users
+                    if (users>-1 and users < mini):
+                        mini = users
+                        mins = []
+                    if (users == mini):
+                        mins.append(host)
                 self.mins = mins
                 max = -1
                 for lab in sorted(self.labs,key=self.labs.get):
@@ -100,4 +97,4 @@ class Webserver(commands.Cog):
                     pickle.dump( (self.labs,self.mins), open ("./persistence/labs.p", "wb" ) )
                 if self.bot:
                     if self.bot.eloop:
-                        self.bot.eloop.create_task(self.bot.updatePMsg())
+                        self.bot.eloop.create_task(self.bot.updatePMsg(self.labs))
