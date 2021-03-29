@@ -17,6 +17,7 @@ class Webserver(commands.Cog):
         self.mins = []
         self.bot = bot
         self.web_server.start()
+        self.pull_labs.start()
 
         try:
             labt = pickle.load( open( "./persistence/labs.p", "rb" ) )
